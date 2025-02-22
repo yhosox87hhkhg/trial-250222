@@ -124,3 +124,9 @@ def close_account(request: Request):
 
     return {"message": "Account and user successfully removed"}
 
+
+# **デバッグ用エンドポイント（すべてのユーザを一覧表示）**
+@app.get("/debug/users")
+def debug_get_users():
+    return {"users": users}
+
