@@ -174,5 +174,5 @@ async def close_account(authenticated_user: str = Depends(authenticate_user)):
 
 if __name__ == "__main__":
     # app.run(host="0.0.0.0", port=8000)
-    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
+    uvicorn.run(app, host="0.0.0.0", port=80, workers=1)
 
