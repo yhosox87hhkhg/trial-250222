@@ -1,6 +1,3 @@
 fastapi
 uvicorn
 pydantic
-secrets
-re
-typing
