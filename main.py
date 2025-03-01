@@ -86,13 +86,9 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     return user_id
 
 # Debug
-# @app.get("/")
-# async def root():
-#    return {"message": "Hello World"}
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/users/TaroYamada")
-
+    raise HTTPException(status_code=404, detail="Not Found")
 
 
 @app.get("/users/{user_id}", response_model=UserDetailResponse)
