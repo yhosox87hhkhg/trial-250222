@@ -114,7 +114,7 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 
 # ** サインアップ（認証不要）**
 @app.post("/signup")
-async def signup( request: SignupRequest, authenticated_user: str = Depends(authenticate_user_signup)):
+async def signup(request: SignupRequest):
     if request.user_id in users:
         return JSONResponse(status_code=400, content={
             "message": "Account creation failed",
@@ -136,6 +136,7 @@ async def signup( request: SignupRequest, authenticated_user: str = Depends(auth
             "nickname": request.nickname or request.user_id
         }
     })
+
 
 
 # update user
