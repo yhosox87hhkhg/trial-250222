@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator, ValidationError
@@ -52,6 +53,14 @@ users: Dict[str, User] = {
         comment="僕は元気です"
     )
 }
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # すべてのオリジンを許可
+    allow_credentials=True,
+    allow_methods=["*"],  # すべてのメソッドを許可
+    allow_headers=["*"],
+)
 
 app = FastAPI()
 security = HTTPBasic()
