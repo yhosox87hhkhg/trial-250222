@@ -92,8 +92,14 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 # ** サインアップ（認証不要）**
 @app.post("/signup")
 async def signup(request: SignupRequest):
-    body = await request.body()
-    print(f"Received request: {body.decode('utf-8')}") # debug
+    # body = await request.body()
+    # print(f"Received request: {body.decode('utf-8')}") # debug
+    try:
+        body = await request.body()
+        request._body = body  # `_body` に保存して再利用可能に
+        print(f"Received request: {body.decode('utf-8')}")  # デバッグ用
+    except Exception as e:
+        print(f"Error reading request body: {str(e)}")  # エラーハンドリング
     try:
         # Pydantic バリデーション実行
         request = SignupRequest.model_validate(request)
