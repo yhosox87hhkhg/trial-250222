@@ -106,46 +106,41 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 
 # ** サインアップ（認証不要）**
 @app.post("/signup")
-async def signup(request: Request):
-    # body = await request.body()
-    # print(f"Received request: {body.decode('utf-8')}") # debug
+async def signup(
+    request: Request,
+    authenticated_user: str = Depends(authenticate_user)  # ✅ 認証必須にする
+):
     try:
-        body = await request.json()  # JSONデータを取得
-        print(f"Received request: {body}")  # デバッグ用
-        signup_data = SignupRequest(**body)  # Pydantic モデルに変換
-        print(f"Parsed signup request: {signup_data}")  # デバッグ用
-    except Exception as e:
-        print(f"Error reading request body: {str(e)}")  # エラーハンドリング
-    try:
-        # Pydantic バリデーション実行
-        request = SignupRequest.model_validate(request)
+        body = await request.json()
+        signup_data = SignupRequest.model_validate(body)
+
     except ValidationError as e:
-        # バリデーションエラーを 400 に変換
         return JSONResponse(status_code=400, content={
             "message": "Account creation failed",
-            "cause": e.errors()[0]['msg']  # 最初のエラーのメッセージを取得
+            "cause": e.errors()[0]['msg']
         })
-    # ✅ すでに user_id が登録されている場合
-    if request.user_id in users:
+    except Exception:
+        return JSONResponse(status_code=400, content={"message": "Invalid request"})
+
+    if signup_data.user_id in users:
         return JSONResponse(status_code=400, content={"message": "Account creation failed", "cause": "already same user_id is used"})
-    # ✅ 必須項目のチェックを行い 400 エラーを明示的に返す
-    if not request.user_id or not request.password:
-        return JSONResponse(status_code=400, content={"message": "Account creation failed", "cause": "required user_id and password"})
-    hashed_password = hashlib.sha256(request.password.encode()).hexdigest()
+
+    hashed_password = hashlib.sha256(signup_data.password.encode()).hexdigest()
     new_user = User(
-        user_id=request.user_id,
+        user_id=signup_data.user_id,
         password=hashed_password,
-        nickname=request.nickname or request.user_id,
-        comment=request.comment or ""
+        nickname=signup_data.nickname or signup_data.user_id,
+        comment=signup_data.comment or ""
     )
-    users[request.user_id] = new_user
+    users[signup_data.user_id] = new_user
+
     return JSONResponse(
         status_code=200,
         content={
             "message": "Account successfully created",
             "user": {
-                "user_id": request.user_id,
-                "nickname": request.nickname or request.user_id
+                "user_id": signup_data.user_id,
+                "nickname": signup_data.nickname or signup_data.user_id
             }
         }
     )
