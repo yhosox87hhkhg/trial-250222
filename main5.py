@@ -23,23 +23,25 @@ class UserDetailResponse(BaseModel):
     user: UserResponse
 
 class SignupRequest(BaseModel):
-    user_id: str = Field(..., min_length=6, max_length=20)
-    password: str = Field(..., min_length=8, max_length=20)
+    user_id: str = Field(None, min_length=6, max_length=20)
+    password: str = Field(None, min_length=8, max_length=20)
     nickname: Optional[str] = Field(None, max_length=30)
     comment: Optional[str] = Field(None, max_length=100)
-
     @field_validator("user_id")
     @classmethod
     def validate_user_id(cls, v: str) -> str:
+        if not v:
+            raise ValueError("user_id is required")
         if not re.match(r"^[a-zA-Z0-9]+$", v):
-            raise HTTPException(status_code=400, detail={"message": "Account creation failed", "cause": "user_id must contain only alphanumeric characters"})
+            raise ValueError("user_id must contain only alphanumeric characters")
         return v
-
     @field_validator("password", mode="before")
     @classmethod
     def validate_password(cls, v: str) -> str:
+        if not v:
+            raise ValueError("password is required")
         if not re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).+$", v):
-            raise HTTPException(status_code=400, detail={"message": "Account creation failed", "cause": "password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"})
+            raise ValueError("password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
         return v
 
 users: Dict[str, User] = {
@@ -81,6 +83,15 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 # ** サインアップ（認証不要）**
 @app.post("/signup")
 async def signup(request: SignupRequest):
+    try:
+        # Pydantic バリデーション実行
+        request = SignupRequest.model_validate(request)
+    except ValidationError as e:
+        # バリデーションエラーを 400 に変換
+        return JSONResponse(status_code=400, content={
+            "message": "Account creation failed",
+            "cause": e.errors()[0]['msg']  # 最初のエラーのメッセージを取得
+        })
     # ✅ すでに user_id が登録されている場合
     if request.user_id in users:
         return JSONResponse(status_code=400, content={"message": "Account creation failed", "cause": "already same user_id is used"})
