@@ -93,7 +93,7 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 @app.post("/signup")
 async def signup(request: SignupRequest):
     body = await request.body()
-    print(f"Received request: {body.decode('utf-8')}")  # 追加
+    print(f"Received request: {body.decode('utf-8')}") # debug
     try:
         # Pydantic バリデーション実行
         request = SignupRequest.model_validate(request)
