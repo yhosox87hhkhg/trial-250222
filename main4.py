@@ -130,11 +130,3 @@ async def close_account(authenticated_user: str = Depends(authenticate_user)):
     # ユーザデータを削除
     del users[authenticated_user]
     return {"message": "Account deleted successfully"}
-
-
-if __name__ == "__main__":
-    # app.run(host="0.0.0.0", port=8000)
-    uvicorn.run(app, host="0.0.0.0", port=8000, workers=1)
-
-
-
