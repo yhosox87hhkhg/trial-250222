@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
+from fastapi import Request
 from pydantic import BaseModel, Field, field_validator, ValidationError
 import hashlib
 import secrets
@@ -91,13 +92,14 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 
 # ** サインアップ（認証不要）**
 @app.post("/signup")
-async def signup(request: SignupRequest):
+async def signup(request: Request):
     # body = await request.body()
     # print(f"Received request: {body.decode('utf-8')}") # debug
     try:
-        body = await request.body()
-        request._body = body  # `_body` に保存して再利用可能に
-        print(f"Received request: {body.decode('utf-8')}")  # デバッグ用
+        body = await request.json()  # JSONデータを取得
+        print(f"Received request: {body}")  # デバッグ用
+        signup_data = SignupRequest(**body)  # Pydantic モデルに変換
+        print(f"Parsed signup request: {signup_data}")  # デバッグ用
     except Exception as e:
         print(f"Error reading request body: {str(e)}")  # エラーハンドリング
     try:
