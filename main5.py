@@ -115,6 +115,13 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 # ** サインアップ（認証不要）**
 @app.post("/signup")
 async def signup(request: SignupRequest):
+    # ✅ user_id / password の必須チェック
+    if not request.user_id or not request.password:
+        return JSONResponse(status_code=400, content={
+            "message": "Account creation failed",
+            "cause": "required user_id and password"
+        })
+
     if request.user_id in users:
         return JSONResponse(status_code=400, content={
             "message": "Account creation failed",
