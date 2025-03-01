@@ -54,6 +54,9 @@ users: Dict[str, User] = {
     )
 }
 
+app = FastAPI()
+security = HTTPBasic()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # すべてのオリジンを許可
@@ -61,9 +64,6 @@ app.add_middleware(
     allow_methods=["*"],  # すべてのメソッドを許可
     allow_headers=["*"],
 )
-
-app = FastAPI()
-security = HTTPBasic()
 
 # ** 認証処理 **
 def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
