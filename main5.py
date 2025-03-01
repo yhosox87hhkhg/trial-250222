@@ -85,7 +85,7 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     user_id = credentials.username
     password = hashlib.sha256(credentials.password.encode()).hexdigest() 
     if user_id not in users or not secrets.compare_digest(users[user_id].password, password):
-        return JSONResponse(status_code=400, content={"message": "Authentication Failed"})
+        raise HTTPException(status_code=400, detail="Authentication Failed")  # ✅ ここを修正
     return user_id
 
 # ** `/` は 404 にする **
@@ -106,44 +106,29 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 
 # ** サインアップ（認証不要）**
 @app.post("/signup")
-async def signup(
-    request: Request,
-    authenticated_user: str = Depends(authenticate_user)  # ✅ 認証必須にする
-):
-    try:
-        body = await request.json()
-        signup_data = SignupRequest.model_validate(body)
-
-    except ValidationError as e:
+async def signup(request: SignupRequest, authenticated_user: str = Depends(authenticate_user) ):
+    if request.user_id in users:
         return JSONResponse(status_code=400, content={
             "message": "Account creation failed",
-            "cause": e.errors()[0]['msg']
+            "cause": "already same user_id is used"
         })
-    except Exception:
-        return JSONResponse(status_code=400, content={"message": "Invalid request"})
 
-    if signup_data.user_id in users:
-        return JSONResponse(status_code=400, content={"message": "Account creation failed", "cause": "already same user_id is used"})
-
-    hashed_password = hashlib.sha256(signup_data.password.encode()).hexdigest()
-    new_user = User(
-        user_id=signup_data.user_id,
+    hashed_password = hashlib.sha256(request.password.encode()).hexdigest()
+    users[request.user_id] = User(
+        user_id=request.user_id,
         password=hashed_password,
-        nickname=signup_data.nickname or signup_data.user_id,
-        comment=signup_data.comment or ""
+        nickname=request.nickname or request.user_id,
+        comment=request.comment or ""
     )
-    users[signup_data.user_id] = new_user
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "message": "Account successfully created",
-            "user": {
-                "user_id": signup_data.user_id,
-                "nickname": signup_data.nickname or signup_data.user_id
-            }
+    return JSONResponse(status_code=200, content={
+        "message": "Account successfully created",
+        "user": {
+            "user_id": request.user_id,
+            "nickname": request.nickname or request.user_id
         }
-    )
+    })
+
 
 # update user
 @app.patch("/users/{user_id}")
