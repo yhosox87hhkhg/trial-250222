@@ -3,7 +3,7 @@ import os
 
 name = "Gunicorn config for FastAPI"
 
-bind = "0.0.0.0:8000"
+bind = "0.0.0.0:8080"
 
 worker_class = "uvicorn.workers.UvicornWorker"
 workers = 1
