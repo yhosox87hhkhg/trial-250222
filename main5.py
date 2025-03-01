@@ -46,6 +46,20 @@ class SignupRequest(BaseModel):
             raise ValueError("password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
         return v
 
+class UserUpdateRequest(BaseModel):
+    user_id: Optional[str] = None
+    password: Optional[str] = None
+    nickname: Optional[str] = Field(None, max_length=30)
+    comment: Optional[str] = Field(None, max_length=100)
+    # ✅ `nickname`・`comment` のバリデーション（制御文字禁止）
+    @field_validator("nickname", "comment")
+    @classmethod
+    def validate_text(cls, v: Optional[str]) -> Optional[str]:
+        if v and re.search(r"[\x00-\x1F\x7F]", v):
+            raise HTTPException(status_code=400, detail={"message": "User update failed", "cause": "Invalid characters in text"})
+        return v
+
+
 users: Dict[str, User] = {
     "TaroYamada": User(
         user_id="TaroYamada",
@@ -135,6 +149,40 @@ async def signup(request: Request):
             }
         }
     )
+
+# update user
+@app.patch("/users/{user_id}")
+async def update_user(
+    user_id: str,
+    request: UserUpdateRequest,
+    authenticated_user: str = Depends(authenticate_user)
+):
+    # ✅ 存在しないユーザーなら 404 を返す
+    if user_id not in users:
+        raise HTTPException(status_code=404, detail="No User found")
+    # ✅ 他のユーザーの情報は更新不可
+    if user_id != authenticated_user:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    # ✅ 更新処理
+    if request.nickname is not None:
+        users[user_id].nickname = request.nickname
+    if request.comment is not None:
+        users[user_id].comment = request.comment
+    # ✅ `user_id` や `password` を更新しようとした場合は 400 を返す
+    if request.user_id is not None or request.password is not None:
+        return JSONResponse(status_code=400, content={"message": "User update failed", "cause": "not updatable user_id and password"})
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "User updated successfully",
+            "user": {
+                "user_id": user_id,
+                "nickname": users[user_id].nickname,
+                "comment": users[user_id].comment
+            }
+        }
+    )
+
 
 # ** アカウント削除（認証必須）**
 @app.post("/close")
