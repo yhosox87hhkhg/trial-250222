@@ -86,9 +86,14 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     return user_id
 
 # Debug
+# @app.get("/")
+# async def root():
+#    return {"message": "Hello World"}
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return RedirectResponse(url="/users/TaroYamada")
+
+
 
 @app.get("/users/{user_id}", response_model=UserDetailResponse)
 async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_user)):
