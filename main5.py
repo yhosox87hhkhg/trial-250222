@@ -112,9 +112,9 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
     if isinstance(authenticated_user, JSONResponse):  # 認証エラーの統一
         return authenticated_user
     if user_id not in users:
-        raise HTTPException(status_code=404, detail="User not found")
+        return JSONResponse(status_code=404, content={"message": "User not found"})
     if user_id != authenticated_user:
-        raise HTTPException(status_code=403, detail="Permission denied")
+        return JSONResponse(status_code=403, content={"message": "Permission denied"})
     return UserDetailResponse(user=UserResponse(**users[user_id].model_dump()))
 
 # ** サインアップ（認証不要）**
