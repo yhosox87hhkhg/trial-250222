@@ -90,7 +90,7 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
     user_id = credentials.username
     password = hashlib.sha256(credentials.password.encode()).hexdigest()
     if user_id not in users or not secrets.compare_digest(users[user_id].password, password):
-        raise HTTPException(status_code=401, detail="Authentication Failed")  # 他のエンドポイントでは 401 を返す
+        return JSONResponse(status_code=401, content={"message": "Authentication Failed"})   # 他のエンドポイントでは 401 を返す
     return user_id
 
 def authenticate_user_signup(credentials: HTTPBasicCredentials = Depends(security)):
