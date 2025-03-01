@@ -80,12 +80,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ** 認証処理 **
 def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
+    """通常の認証処理 (例: /users/{user_id}, /close など)"""
     user_id = credentials.username
-    password = hashlib.sha256(credentials.password.encode()).hexdigest() 
+    password = hashlib.sha256(credentials.password.encode()).hexdigest()
     if user_id not in users or not secrets.compare_digest(users[user_id].password, password):
-        raise HTTPException(status_code=400, detail="Authentication Failed")  # ✅ ここを修正
+        raise HTTPException(status_code=401, detail="Not authenticated")  # 他のエンドポイントでは 401 を返す
+    return user_id
+
+def authenticate_user_signup(credentials: HTTPBasicCredentials = Depends(security)):
+    """/signup 専用の認証処理 (失敗時は 400 Bad Request を返す)"""
+    user_id = credentials.username
+    password = hashlib.sha256(credentials.password.encode()).hexdigest()
+    if user_id not in users or not secrets.compare_digest(users[user_id].password, password):
+        return JSONResponse(status_code=400, content={"message": "Authentication Failed"})  # ✅ /signup は 400 を返す
     return user_id
 
 # ** `/` は 404 にする **
@@ -106,7 +114,7 @@ async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_
 
 # ** サインアップ（認証不要）**
 @app.post("/signup")
-async def signup(request: SignupRequest, authenticated_user: str = Depends(authenticate_user) ):
+async def signup( request: SignupRequest, authenticated_user: str = Depends(authenticate_user_signup)):
     if request.user_id in users:
         return JSONResponse(status_code=400, content={
             "message": "Account creation failed",
