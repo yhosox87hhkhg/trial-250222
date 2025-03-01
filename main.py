@@ -88,8 +88,7 @@ def authenticate_user(credentials: HTTPBasicCredentials = Depends(security)):
 # Debug
 @app.get("/")
 async def root():
-    raise HTTPException(status_code=404, detail="Not Found")
-
+   return {"message": "Hello World"}
 
 @app.get("/users/{user_id}", response_model=UserDetailResponse)
 async def get_user(user_id: str, authenticated_user: str = Depends(authenticate_user)):
